@@ -1,0 +1,26 @@
+{
+  "$schema": "https://www.schemastore.org/tsconfig",
+  "compilerOptions": {
+    "lib": [
+      "es2024",
+      "ESNext.Array",
+      "ESNext.Collection",
+      "ESNext.Iterator",
+      "ESNext.Promise"
+    ],
+    "module": "nodenext",
+    "target": "es2024",
+
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "moduleResolution": "node16",
+
+    "paths": {
+      "@crowdstrike/aidr/schemas/*": ["./src/schemas/*"],
+      "@crowdstrike/aidr": ["./src/index.ts"]
+    }
+  },
+  "include": ["src", "tests", "examples"],
+  "exclude": []
+}
