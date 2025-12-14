@@ -1,0 +1,3 @@
+overrides:
+  # <https://github.com/advisories/GHSA-mh29-5h37-fv8m>
+  js-yaml@<3.14.2: "^3.14.2"
