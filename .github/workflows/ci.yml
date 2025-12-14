@@ -91,6 +91,7 @@ jobs:
       - test
     if: github.repository == 'crowdstrike/aidr-typescript' && github.event_name != 'pull_request'
     runs-on: ubuntu-24.04
+    environment: release
     permissions:
       contents: write
       id-token: write
@@ -123,4 +124,5 @@ jobs:
         run: pnpx semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           LOG_LEVEL: debug
