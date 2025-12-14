@@ -1,2 +1,3 @@
-# aidr-typescript
-TypeScript SDK for CrowdStrike AIDR
+# CrowdStrike AIDR TypeScript SDK
+
+TypeScript SDK for CrowdStrike AIDR.
