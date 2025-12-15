@@ -16,6 +16,8 @@ export const PangeaResponseSchema = v.object({
 
 export const PangeaValidationErrorsSchema = PangeaResponseSchema;
 
+export const PangeaAcceptedResponseSchema = PangeaResponseSchema;
+
 /**
  * Device status. Allowed values are active, pending, disabled
  */
@@ -228,9 +230,7 @@ export const ChatCompletionsGuardSchema = v.strictObject({
   source_ip: v.optional(v.string()),
   source_location: v.optional(v.string()),
   tenant_id: v.optional(v.string()),
-  event_type: v.optional(
-    v.picklist(['input', 'output', 'tool_input', 'tool_output', 'tool_listing'])
-  ),
+  event_type: v.optional(v.string(), 'input'),
   collector_instance_id: v.optional(v.string()),
   extra_info: v.optional(
     v.objectWithRest(
@@ -257,6 +257,7 @@ export const ChatCompletionsGuardSchema = v.strictObject({
       v.unknown()
     )
   ),
+  input_fpe_context: v.optional(v.string()),
 });
 
 export const AidrPromptInjectionResultSchema = v.object({
@@ -694,7 +695,9 @@ export const AidrMetricSchema = v.strictObject({
   group_by: v.optional(
     v.array(v.pipe(v.string(), v.regex(/^[A-Za-z_][A-Za-z0-9_]{0,63}$/)))
   ),
-  order_by: v.optional(v.string()),
+  order_by: v.optional(
+    v.pipe(v.string(), v.regex(/^[A-Za-z_][A-Za-z0-9_.]{0,63}$/))
+  ),
   order: v.optional(v.picklist(['asc', 'desc'])),
   limit: v.optional(v.pipe(v.number(), v.integer())),
   offset: v.optional(v.pipe(v.number(), v.integer())),
@@ -718,7 +721,9 @@ export const AidrMetricAggregatesSearchParamsSchema = v.strictObject({
   group_by: v.optional(
     v.array(v.pipe(v.string(), v.regex(/^[A-Za-z_][A-Za-z0-9_]{0,63}$/)))
   ),
-  order_by: v.optional(v.string()),
+  order_by: v.optional(
+    v.pipe(v.string(), v.regex(/^[A-Za-z_][A-Za-z0-9_.]{0,63}$/))
+  ),
   order: v.optional(v.picklist(['asc', 'desc'])),
   limit: v.optional(v.pipe(v.number(), v.integer())),
   offset: v.optional(v.pipe(v.number(), v.integer())),
@@ -768,17 +773,14 @@ export const AidrMetricResultSchema = v.object({
 });
 
 /**
- * A time in ISO-8601 format
+ * Configuration for an individual access rule used in an AI Guard recipe. Each rule defines its matching logic and the action to apply when the logic evaluates to true.
  */
-export const AuthnTimestampSchema = v.pipe(v.string(), v.isoTimestamp());
-
-/**
- * A time in ISO-8601 format or null
- */
-export const AirdTimestampNullableSchema = v.union([
-  AuthnTimestampSchema,
-  v.null(),
-]);
+export const AccessRuleSettingsSchema = v.strictObject({
+  rule_key: v.pipe(v.string(), v.regex(/^([a-zA-Z0-9_][a-zA-Z0-9/|_]*)$/)),
+  name: v.string(),
+  state: v.picklist(['block', 'report']),
+  logic: v.record(v.string(), v.unknown()),
+});
 
 /**
  * Details about the evaluation of a single rule, including whether it matched, the action to take, the rule name, and optional debugging information.
@@ -890,16 +892,6 @@ export const DetectorSettingsSchema = v.array(
   })
 );
 
-/**
- * Configuration for an individual access rule used in an AI Guard recipe. Each rule defines its matching logic and the action to apply when the logic evaluates to true.
- */
-export const AccessRuleSettingsSchema = v.strictObject({
-  rule_key: v.pipe(v.string(), v.regex(/^([a-zA-Z0-9_][a-zA-Z0-9/|_]*)$/)),
-  name: v.string(),
-  state: v.picklist(['block', 'report']),
-  logic: v.record(v.string(), v.unknown()),
-});
-
 export const AidrPolicySchema = v.strictObject({
   key: v.string(),
   name: v.string(),
@@ -973,43 +965,6 @@ export const RecipeConfigSchema = v.strictObject({
 export const AidrPolicyDefaultsSchema = v.object({
   default_policies: v.record(v.string(), v.unknown()),
 });
-
-export const LanguageResultSchema = v.object({
-  action: v.optional(v.string()),
-  language: v.optional(v.string()),
-});
-
-export const RedactEntityResultSchema = v.object({
-  entities: v.optional(
-    v.array(
-      v.object({
-        action: v.string(),
-        type: v.string(),
-        value: v.string(),
-        redacted: v.boolean(),
-        start_pos: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0))),
-      })
-    )
-  ),
-});
-
-export const MaliciousEntityActionSchema = v.picklist([
-  'report',
-  'defang',
-  'disabled',
-  'block',
-]);
-
-export const PiiEntityActionSchema = v.picklist([
-  'disabled',
-  'report',
-  'block',
-  'mask',
-  'partial_masking',
-  'replacement',
-  'hash',
-  'fpe',
-]);
 
 export const AidrOtelResourceLogsSchema: v.GenericSchema = v.objectWithRest(
   {
@@ -1115,79 +1070,104 @@ export const AidrPostV1GuardChatCompletionsRequestSchema = v.object({
   query: v.optional(v.never()),
 });
 
-/**
- * No description provided
- */
-export const AidrPostV1GuardChatCompletionsResponseSchema = v.intersect([
-  PangeaResponseSchema,
-  v.object({
-    result: v.optional(
-      v.object({
-        guard_output: v.optional(v.record(v.string(), v.unknown())),
-        blocked: v.optional(v.boolean()),
-        transformed: v.optional(v.boolean()),
-        policy: v.optional(v.string()),
-        detectors: v.object({
-          malicious_prompt: v.optional(
-            v.object({
-              detected: v.optional(v.boolean()),
-              data: v.optional(AidrPromptInjectionResultSchema),
-            })
-          ),
-          confidential_and_pii_entity: v.optional(
-            v.object({
-              detected: v.optional(v.boolean()),
-              data: v.optional(AidrRedactEntityResultSchema),
-            })
-          ),
-          malicious_entity: v.optional(
-            v.object({
-              detected: v.optional(v.boolean()),
-              data: v.optional(AidrMaliciousEntityResultSchema),
-            })
-          ),
-          custom_entity: v.optional(
-            v.object({
-              detected: v.optional(v.boolean()),
-              data: v.optional(AidrRedactEntityResultSchema),
-            })
-          ),
-          secret_and_key_entity: v.optional(
-            v.object({
-              detected: v.optional(v.boolean()),
-              data: v.optional(AidrRedactEntityResultSchema),
-            })
-          ),
-          competitors: v.optional(
-            v.object({
-              detected: v.optional(v.boolean()),
-              data: v.optional(AidrSingleEntityResultSchema),
-            })
-          ),
-          language: v.optional(
-            v.object({
-              detected: v.optional(v.boolean()),
-              data: v.optional(AidrLanguageResultSchema),
-            })
-          ),
-          topic: v.optional(
-            v.object({
-              detected: v.optional(v.boolean()),
-              data: v.optional(AidrTopicResultSchema),
-            })
-          ),
-          code: v.optional(
-            v.object({
-              detected: v.optional(v.boolean()),
-              data: v.optional(AidrLanguageResultSchema),
-            })
-          ),
-        }),
-        access_rules: v.optional(AidrAccessRulesResponseSchema),
-        fpe_context: v.optional(v.string()),
-      })
-    ),
-  }),
+export const AidrPostV1GuardChatCompletionsResponseSchema = v.union([
+  v.intersect([
+    PangeaResponseSchema,
+    v.object({
+      result: v.optional(
+        v.object({
+          guard_output: v.optional(v.record(v.string(), v.unknown())),
+          blocked: v.optional(v.boolean()),
+          transformed: v.optional(v.boolean()),
+          policy: v.optional(v.string()),
+          detectors: v.object({
+            malicious_prompt: v.optional(
+              v.object({
+                detected: v.optional(v.boolean()),
+                data: v.optional(AidrPromptInjectionResultSchema),
+              })
+            ),
+            confidential_and_pii_entity: v.optional(
+              v.object({
+                detected: v.optional(v.boolean()),
+                data: v.optional(AidrRedactEntityResultSchema),
+              })
+            ),
+            malicious_entity: v.optional(
+              v.object({
+                detected: v.optional(v.boolean()),
+                data: v.optional(AidrMaliciousEntityResultSchema),
+              })
+            ),
+            custom_entity: v.optional(
+              v.object({
+                detected: v.optional(v.boolean()),
+                data: v.optional(AidrRedactEntityResultSchema),
+              })
+            ),
+            secret_and_key_entity: v.optional(
+              v.object({
+                detected: v.optional(v.boolean()),
+                data: v.optional(AidrRedactEntityResultSchema),
+              })
+            ),
+            competitors: v.optional(
+              v.object({
+                detected: v.optional(v.boolean()),
+                data: v.optional(AidrSingleEntityResultSchema),
+              })
+            ),
+            language: v.optional(
+              v.object({
+                detected: v.optional(v.boolean()),
+                data: v.optional(AidrLanguageResultSchema),
+              })
+            ),
+            topic: v.optional(
+              v.object({
+                detected: v.optional(v.boolean()),
+                data: v.optional(AidrTopicResultSchema),
+              })
+            ),
+            code: v.optional(
+              v.object({
+                detected: v.optional(v.boolean()),
+                data: v.optional(AidrLanguageResultSchema),
+              })
+            ),
+          }),
+          access_rules: v.optional(AidrAccessRulesResponseSchema),
+          fpe_context: v.optional(v.string()),
+        })
+      ),
+    }),
+  ]),
+  v.intersect([PangeaResponseSchema, PangeaAcceptedResponseSchema]),
+]);
+
+export const AidrPostV1UnredactRequestSchema = v.object({
+  body: v.optional(
+    v.strictObject({
+      redacted_data: v.unknown(),
+      fpe_context: v.string(),
+    })
+  ),
+  path: v.optional(v.never()),
+  query: v.optional(v.never()),
+});
+
+export const AidrPostV1UnredactResponseSchema = v.union([
+  v.intersect([
+    PangeaResponseSchema,
+    v.object({
+      result: v.optional(
+        v.object({
+          data: v.unknown(),
+        })
+      ),
+    }),
+  ]),
+  v.intersect([PangeaResponseSchema, PangeaAcceptedResponseSchema]),
 ]);
 
 export const GetAsyncRequestRequestSchema = v.object({
@@ -1203,13 +1183,12 @@ export const GetAsyncRequestResponseSchema = v.union([
   v.intersect([
     PangeaResponseSchema,
     v.object({
-      result: v.optional(
-        v.object({
-          ttl_mins: v.optional(v.pipe(v.number(), v.integer())),
-          retry_counter: v.optional(v.pipe(v.number(), v.integer())),
-          location: v.optional(v.string()),
-        })
-      ),
+      result: v.object({
+        ttl_mins: v.optional(v.pipe(v.number(), v.integer())),
+        retry_counter: v.optional(v.pipe(v.number(), v.integer())),
+        location: v.optional(v.string()),
+      }),
+      status: v.picklist(['Accepted']),
     }),
   ]),
 ]);
