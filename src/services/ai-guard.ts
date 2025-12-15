@@ -3,6 +3,8 @@ import type { RequestOptions } from '../internal/request-options';
 import type { MaybeAcceptedResponse } from '../types';
 import type {
   AidrPostV1GuardChatCompletionsResponse,
+  AidrPostV1UnredactData,
+  AidrPostV1UnredactResponse,
   ChatCompletionsGuard,
 } from '../types/ai-guard';
 
@@ -23,5 +25,15 @@ export class AIGuard extends Client {
       body,
       ...options,
     });
+  }
+
+  /**
+   * Decrypt or unredact fpe redactions
+   */
+  unredact(
+    body: AidrPostV1UnredactData['body'],
+    options?: RequestOptions
+  ): Promise<MaybeAcceptedResponse<AidrPostV1UnredactResponse['result']>> {
+    return this.post('/v1/unredact', { body, ...options });
   }
 }

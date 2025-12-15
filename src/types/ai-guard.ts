@@ -49,6 +49,8 @@ export type PangeaResponse = {
 
 export type PangeaValidationErrors = PangeaResponse;
 
+export type PangeaAcceptedResponse = PangeaResponse;
+
 /**
  * Device status. Allowed values are active, pending, disabled
  */
@@ -619,12 +621,7 @@ export type ChatCompletionsGuard = {
   /**
    * (AIDR) Event Type.
    */
-  event_type?:
-    | 'input'
-    | 'output'
-    | 'tool_input'
-    | 'tool_output'
-    | 'tool_listing';
+  event_type?: string;
   /**
    * (AIDR) collector instance id.
    */
@@ -685,6 +682,10 @@ export type ChatCompletionsGuard = {
         }>
       | undefined;
   };
+  /**
+   * FPE (Format Preserving Encryption) context from a previous guard request. When provided, the encrypted input will be unredacted before processing.
+   */
+  input_fpe_context?: string;
 };
 
 export type AidrPromptInjectionResult = {
@@ -1543,11 +1544,6 @@ export type AidrServiceConfigResult = AidrServiceConfig;
 export type AidrTimestamp = string;
 
 /**
- * A time in ISO-8601 format or null
- */
-export type AirdTimestampNullable = AuthnTimestamp | null;
-
-/**
  * Define field name and path mapping to extract from the log
  */
 export type AidrResourceFieldMapping = {
@@ -1825,9 +1821,28 @@ export type AidrMetricResultDetectorItem = {
 };
 
 /**
- * A time in ISO-8601 format
+ * Configuration for an individual access rule used in an AI Guard recipe. Each rule defines its matching logic and the action to apply when the logic evaluates to true.
  */
-export type AuthnTimestamp = string;
+export type AccessRuleSettings = {
+  /**
+   * Unique identifier for this rule. Should be user-readable and consistent across recipe updates.
+   */
+  rule_key: string;
+  /**
+   * Display label for the rule shown in user interfaces.
+   */
+  name: string;
+  /**
+   * Action to apply if the rule matches. Use 'block' to stop further processing or 'report' to simply log the match.
+   */
+  state: 'block' | 'report';
+  /**
+   * JSON Logic condition that determines whether this rule matches.
+   */
+  logic: {
+    [key: string]: unknown;
+  };
+};
 
 /**
  * Details about the evaluation of a single rule, including whether it matched, the action to take, the rule name, and optional debugging information.
@@ -1856,50 +1871,6 @@ export type AccessRuleResult = {
    */
   attributes?: {
     [key: string]: unknown;
-  };
-};
-
-/**
- * Defines an AI Guard recipe - a named configuration of detectors and redaction settings used to analyze and protect data flows in AI-powered applications.
- *
- * Recipes specify which detectors are active, how they behave, and may include reusable settings such as FPE tweaks.
- *
- * For details, see the [AI Guard Recipes](https://pangea.cloud/docs/ai-guard/recipes) documentation.
- */
-export type RecipeConfig = {
-  /**
-   * Human-readable name of the recipe
-   */
-  name: string;
-  /**
-   * Detailed description of the recipe's purpose or use case
-   */
-  description: string;
-  /**
-   * Optional version identifier for the recipe. Can be used to track changes.
-   */
-  version?: string;
-  /**
-   * Settings for [AI Guard Detectors](https://pangea.cloud/docs/ai-guard/recipes#detectors), including which detectors to enable and how they behave
-   */
-  detectors?: DetectorSettings;
-  /**
-   * Configuration for access rules used in an AI Guard recipe.
-   */
-  access_rules?: Array<AccessRuleSettings>;
-  /**
-   * Connector-level Redact configuration. These settings allow you to define reusable redaction parameters, such as FPE tweak value.
-   */
-  connector_settings?: {
-    /**
-     * Settings for Redact integration at the recipe level
-     */
-    redact?: {
-      /**
-       * ID of a Vault secret containing the tweak value used for Format-Preserving Encryption (FPE). Enables deterministic encryption, ensuring that identical inputs produce consistent encrypted outputs.
-       */
-      fpe_tweak_vault_secret_id?: string;
-    };
   };
 };
 
@@ -1947,6 +1918,50 @@ export type DetectorSettings = Array<{
     }>;
   };
 }>;
+
+/**
+ * Defines an AI Guard recipe - a named configuration of detectors and redaction settings used to analyze and protect data flows in AI-powered applications.
+ *
+ * Recipes specify which detectors are active, how they behave, and may include reusable settings such as FPE tweaks.
+ *
+ * For details, see the [AI Guard Recipes](https://pangea.cloud/docs/ai-guard/recipes) documentation.
+ */
+export type RecipeConfig = {
+  /**
+   * Human-readable name of the recipe
+   */
+  name: string;
+  /**
+   * Detailed description of the recipe's purpose or use case
+   */
+  description: string;
+  /**
+   * Optional version identifier for the recipe. Can be used to track changes.
+   */
+  version?: string;
+  /**
+   * Settings for [AI Guard Detectors](https://pangea.cloud/docs/ai-guard/recipes#detectors), including which detectors to enable and how they behave
+   */
+  detectors?: DetectorSettings;
+  /**
+   * Configuration for access rules used in an AI Guard recipe.
+   */
+  access_rules?: Array<AccessRuleSettings>;
+  /**
+   * Connector-level Redact configuration. These settings allow you to define reusable redaction parameters, such as FPE tweak value.
+   */
+  connector_settings?: {
+    /**
+     * Settings for Redact integration at the recipe level
+     */
+    redact?: {
+      /**
+       * ID of a Vault secret containing the tweak value used for Format-Preserving Encryption (FPE). Enables deterministic encryption, ensuring that identical inputs produce consistent encrypted outputs.
+       */
+      fpe_tweak_vault_secret_id?: string;
+    };
+  };
+};
 
 export type RuleRedactionConfig = (
   | {
@@ -2034,66 +2049,6 @@ export type RuleRedactionConfig = (
     | 'alphanumeric'
     | null;
 };
-
-/**
- * Configuration for an individual access rule used in an AI Guard recipe. Each rule defines its matching logic and the action to apply when the logic evaluates to true.
- */
-export type AccessRuleSettings = {
-  /**
-   * Unique identifier for this rule. Should be user-readable and consistent across recipe updates.
-   */
-  rule_key: string;
-  /**
-   * Display label for the rule shown in user interfaces.
-   */
-  name: string;
-  /**
-   * Action to apply if the rule matches. Use 'block' to stop further processing or 'report' to simply log the match.
-   */
-  state: 'block' | 'report';
-  /**
-   * JSON Logic condition that determines whether this rule matches.
-   */
-  logic: {
-    [key: string]: unknown;
-  };
-};
-
-export type LanguageResult = {
-  /**
-   * The action taken by this Detector
-   */
-  action?: string;
-  language?: string;
-};
-
-export type RedactEntityResult = {
-  /**
-   * Detected redaction rules.
-   */
-  entities?: Array<{
-    /**
-     * The action taken on this Entity
-     */
-    action: string;
-    type: string;
-    value: string;
-    redacted: boolean;
-    start_pos?: number;
-  }>;
-};
-
-export type MaliciousEntityAction = 'report' | 'defang' | 'disabled' | 'block';
-
-export type PiiEntityAction =
-  | 'disabled'
-  | 'report'
-  | 'block'
-  | 'mask'
-  | 'partial_masking'
-  | 'replacement'
-  | 'hash'
-  | 'fpe';
 
 export type AidrPostV1GuardChatCompletionsData = {
   body?: ChatCompletionsGuard;
@@ -2238,10 +2193,61 @@ export type AidrPostV1GuardChatCompletionsResponses = {
       fpe_context?: string;
     };
   };
+  /**
+   * Asynchronous request in progress
+   */
+  202: PangeaResponse & PangeaAcceptedResponse;
 };
 
 export type AidrPostV1GuardChatCompletionsResponse =
   AidrPostV1GuardChatCompletionsResponses[keyof AidrPostV1GuardChatCompletionsResponses];
+
+export type AidrPostV1UnredactData = {
+  body?: {
+    /**
+     * Data to unredact
+     */
+    redacted_data: unknown;
+    /**
+     * FPE context used to decrypt and unredact data
+     */
+    fpe_context: string;
+  };
+  path?: never;
+  query?: never;
+  url: '/v1/unredact';
+};
+
+export type AidrPostV1UnredactErrors = {
+  /**
+   * Validation errors
+   */
+  400: PangeaResponse & PangeaValidationErrors;
+};
+
+export type AidrPostV1UnredactError =
+  AidrPostV1UnredactErrors[keyof AidrPostV1UnredactErrors];
+
+export type AidrPostV1UnredactResponses = {
+  /**
+   * The unredacted data
+   */
+  200: PangeaResponse & {
+    result?: {
+      /**
+       * The unredacted data
+       */
+      data: unknown;
+    };
+  };
+  /**
+   * Asynchronous request in progress
+   */
+  202: PangeaResponse & PangeaAcceptedResponse;
+};
+
+export type AidrPostV1UnredactResponse =
+  AidrPostV1UnredactResponses[keyof AidrPostV1UnredactResponses];
 
 export type GetAsyncRequestData = {
   body?: never;
@@ -2264,11 +2270,12 @@ export type GetAsyncRequestResponses = {
    * Asynchronous request in progress
    */
   202: PangeaResponse & {
-    result?: {
+    result: {
       ttl_mins?: number;
       retry_counter?: number;
       location?: string;
     };
+    status: 'Accepted';
   };
 };
 
