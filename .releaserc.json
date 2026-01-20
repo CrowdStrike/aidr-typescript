@@ -9,7 +9,7 @@
         "successCommentCondition": "<% return issue.user.type !== 'Bot'; %>"
       }
     ],
-    "@semantic-release/npm"
+    "@containerbase/semantic-release-pnpm"
   ],
   "branches": [
     {
