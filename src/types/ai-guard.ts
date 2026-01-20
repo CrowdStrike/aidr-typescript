@@ -42,9 +42,6 @@ export type PangeaResponse = {
    * Provides a concise and brief overview of the purpose or primary objective of the API endpoint. It serves as a high-level summary or description of the functionality or feature offered by the endpoint.
    */
   summary?: string;
-  result?: {
-    [key: string]: unknown;
-  };
 };
 
 export type PangeaValidationErrors = PangeaResponse;

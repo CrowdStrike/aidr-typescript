@@ -2,9 +2,9 @@ import { Client } from '../client';
 import type { RequestOptions } from '../internal/request-options';
 import type { MaybeAcceptedResponse } from '../types';
 import type {
-  AidrPostV1GuardChatCompletionsResponse,
+  AidrPostV1GuardChatCompletionsResponses,
   AidrPostV1UnredactData,
-  AidrPostV1UnredactResponse,
+  AidrPostV1UnredactResponses,
   ChatCompletionsGuard,
 } from '../types/ai-guard';
 
@@ -19,7 +19,9 @@ export class AIGuard extends Client {
     body: ChatCompletionsGuard,
     options?: RequestOptions
   ): Promise<
-    MaybeAcceptedResponse<AidrPostV1GuardChatCompletionsResponse['result']>
+    MaybeAcceptedResponse<
+      AidrPostV1GuardChatCompletionsResponses[200]['result']
+    >
   > {
     return this.post('/v1/guard_chat_completions', {
       body,
@@ -33,7 +35,9 @@ export class AIGuard extends Client {
   unredact(
     body: AidrPostV1UnredactData['body'],
     options?: RequestOptions
-  ): Promise<MaybeAcceptedResponse<AidrPostV1UnredactResponse['result']>> {
+  ): Promise<
+    MaybeAcceptedResponse<AidrPostV1UnredactResponses[200]['result']>
+  > {
     return this.post('/v1/unredact', { body, ...options });
   }
 }
