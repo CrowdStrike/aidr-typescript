@@ -462,9 +462,6 @@
           "summary": {
             "type": "string",
             "description": "Provides a concise and brief overview of the purpose or primary objective of the API endpoint. It serves as a high-level summary or description of the functionality or feature offered by the endpoint."
-          },
-          "result": {
-            "type": "object"
           }
         },
         "examples": [
