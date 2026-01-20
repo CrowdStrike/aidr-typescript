@@ -20,12 +20,12 @@ importers:
       '@biomejs/biome':
         specifier: 2.3.5
         version: 2.3.5
+      '@containerbase/semantic-release-pnpm':
+        specifier: 1.3.5
+        version: 1.3.5(semantic-release@25.0.2(typescript@5.9.3))
       '@hey-api/openapi-ts':
         specifier: 0.88.0
         version: 0.88.0(typescript@5.9.3)
-      '@semantic-release/npm':
-        specifier: 13.1.2
-        version: 13.1.2(semantic-release@25.0.2(typescript@5.9.3))
       '@stoplight/prism-cli':
         specifier: 5.14.2
         version: 5.14.2
@@ -149,6 +149,12 @@ packages:
   '@colors/colors@1.5.0':
     resolution: {integrity: sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ==}
     engines: {node: '>=0.1.90'}
+
+  '@containerbase/semantic-release-pnpm@1.3.5':
+    resolution: {integrity: sha512-MmBSNm1l/41tW++MALEJ1vm2Oi8X7kEeAD3HfxkG+6Rx+I4cLh6QT9+lcv8lvOePCKfaZfG45Yt443DOCENdbA==}
+    engines: {node: ^22.11.0 || ^24}
+    peerDependencies:
+      semantic-release: ^24.0.0 || ^25.0.0
 
   '@emnapi/core@1.7.1':
     resolution: {integrity: sha512-o1uhUASyo921r2XtHYOHy7gdkGLge8ghBEQHMWmyJFoXlpU58kIrhhN3w26lpQb6dspetweapMn2CSNwQ8I4wg==}
@@ -2975,6 +2981,14 @@ snapshots:
 
   '@colors/colors@1.5.0':
     optional: true
+
+  '@containerbase/semantic-release-pnpm@1.3.5(semantic-release@25.0.2(typescript@5.9.3))':
+    dependencies:
+      '@semantic-release/error': 4.0.0
+      aggregate-error: 5.0.0
+      execa: 9.6.1
+      semantic-release: 25.0.2(typescript@5.9.3)
+      semver: 7.7.3
 
   '@emnapi/core@1.7.1':
     dependencies:
