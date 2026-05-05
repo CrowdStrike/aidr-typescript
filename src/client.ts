@@ -16,6 +16,7 @@ import type {
 import type {
   FinalizedRequestInit,
   HTTPMethod,
+  MergedRequestInit,
   PromiseOrValue,
 } from './internal/types';
 import { sleep } from './internal/utils/sleep';
@@ -62,6 +63,12 @@ export interface ClientOptions {
   timeout?: number;
 
   /**
+   * Additional `RequestInit` options to be passed to `fetch` calls. Properties
+   * will be overridden by per-request `fetchOptions`.
+   */
+  fetchOptions?: MergedRequestInit;
+
+  /**
    * Specify a custom `fetch` function implementation.
    *
    * If not provided, we expect that `fetch` is defined globally.
@@ -89,6 +96,7 @@ export abstract class Client {
   timeout: number;
   maxRetries: number;
   maxPollingAttempts: number;
+  fetchOptions?: MergedRequestInit;
 
   private readonly fetch: Fetch;
   private readonly _options: ClientOptions;
@@ -112,6 +120,7 @@ export abstract class Client {
     this.maxPollingAttempts = options.maxPollingAttempts ?? 5;
     this.timeout = options.timeout ?? 60_000;
     this.token = options.token;
+    this.fetchOptions = options.fetchOptions;
 
     this._options = options;
   }
@@ -329,6 +338,8 @@ export abstract class Client {
       ...options,
     };
     if (method) {
+      // Custom methods like 'patch' need to be uppercased.
+      // See: <https://github.com/nodejs/undici/issues/2294>
       fetchOptions.method = method.toUpperCase();
     }
 
@@ -365,6 +376,8 @@ export abstract class Client {
       headers: reqHeaders,
       ...(options.signal && { signal: options.signal }),
       ...(body && { body }),
+      ...(this.fetchOptions ?? {}),
+      ...(options.fetchOptions ?? {}),
     };
 
     return { req, url, timeout: options.timeout };

@@ -11,4 +11,7 @@ export default defineConfig({
   fixedExtension: true,
   format: ['cjs', 'esm'],
   hash: false,
+  deps: {
+    neverBundle: [/node_modules/],
+  },
 });
