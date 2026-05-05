@@ -1,5 +1,5 @@
 import type { HeadersLike } from './headers';
-import type { HTTPMethod } from './types';
+import type { HTTPMethod, MergedRequestInit } from './types';
 
 export type RequestOptions = {
   /** Query parameters to include in the request URL. */
@@ -34,6 +34,12 @@ export type RequestOptions = {
    * @unit milliseconds
    */
   timeout?: number;
+
+  /**
+   * Additional `RequestInit` options to be passed to the underlying `fetch`
+   * call. These options will be merged with the client's default fetch options.
+   */
+  fetchOptions?: MergedRequestInit;
 
   /**
    * Template for constructing the base URL for API requests. The placeholder

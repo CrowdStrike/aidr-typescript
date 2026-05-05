@@ -92,3 +92,56 @@ const response = await client.guardChatCompletions(
   }
 );
 ```
+
+## Fetch options
+
+If you want to set custom `fetch` options without overriding the `fetch`
+function, you can provide a `fetchOptions` object when instantiating the client
+or making a request. Request-specific options override client options.
+
+```ts
+const client = new AIGuard({
+  fetchOptions: {
+    // `RequestInit` options.
+  },
+});
+```
+
+## Configuring proxies
+
+To modify proxy behavior, you can provide custom `fetchOptions` that add
+runtime-specific proxy options to requests:
+
+### Node.js
+
+```ts
+import * as undici from 'undici';
+
+const proxyAgent = new undici.ProxyAgent('http://localhost:8888');
+const client = new AIGuard({
+  fetchOptions: {
+    dispatcher: proxyAgent,
+  },
+});
+```
+
+### Bun
+
+```ts
+const client = new AIGuard({
+  fetchOptions: {
+    proxy: 'http://localhost:8888',
+  },
+});
+```
+
+### Deno
+
+```ts
+const httpClient = Deno.createHttpClient({ proxy: { url: 'http://localhost:8888' } });
+const client = new AIGuard({
+  fetchOptions: {
+    client: httpClient,
+  },
+});
+```
