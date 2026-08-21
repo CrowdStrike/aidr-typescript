@@ -616,6 +616,10 @@ export type ChatCompletionsGuard = {
    */
   tenant_id?: string;
   /**
+   * Unique identifier for the span in distributed tracing, used to track and correlate AI events across the request lifecycle.
+   */
+  span_id?: string;
+  /**
    * (AIDR) Event Type.
    */
   event_type?: string;
@@ -642,11 +646,11 @@ export type ChatCompletionsGuard = {
     /**
      * Name of subject actor/service account.
      */
-    actor_name?: string;
+    user_name?: string;
     /**
-     * The group of subject actor.
+     * The group of subject user/actor.
      */
-    actor_group?: string;
+    user_group?: string;
     /**
      * Geographic region or data center.
      */
@@ -667,22 +671,52 @@ export type ChatCompletionsGuard = {
       server_name: string;
       tools: Array<string>;
     }>;
-    [key: string]:
-      | unknown
-      | string
-      | Array<{
-          /**
-           * MCP server name
-           */
-          server_name: string;
-          tools: Array<string>;
-        }>
-      | undefined;
+    [key: string]: unknown;
   };
   /**
    * FPE (Format Preserving Encryption) context from a previous guard request. When provided, the encrypted input will be unredacted before processing.
    */
   input_fpe_context?: string;
+  /**
+   * Session identifier for correlating multiple API calls within one logical session.
+   */
+  session_id?: string;
+  /**
+   * Groups related prompts and responses within a session.
+   */
+  conversation_id?: string;
+  /**
+   * Target process image file name from endpoint network inspection.
+   */
+  image_file_name?: string;
+  /**
+   * Hex-encoded SHA256 of the target process image.
+   */
+  process_sha256?: string;
+  /**
+   * Sensor process tag identifiers associated with the originating process.
+   */
+  process_tags?: Array<string>;
+  /**
+   * Classification of the AI agent originating this request.
+   */
+  agent_type?: 'code-assistant' | 'chatbot' | 'subagent';
+  /**
+   * Whether the source is an AI coding or agentic agent.
+   */
+  is_agent?: boolean;
+  /**
+   * OS-level process identifier or caller-defined process key.
+   */
+  process_id?: string;
+  /**
+   * Hostname of the endpoint or server originating this request.
+   */
+  hostname?: string;
+  /**
+   * Domain of the target AI application or service.
+   */
+  domain?: string;
 };
 
 export type AidrPromptInjectionResult = {
@@ -761,11 +795,65 @@ export type AidrTopicResult = {
   }>;
 };
 
+export type AidrEmojiResult = {
+  /**
+   * The action taken by this Detector
+   */
+  action?: string;
+  emojis?: Array<{
+    slug?: string;
+    char?: string;
+  }>;
+};
+
+/**
+ * Details about the detected MCP validation issues
+ */
+export type AidrMcpValidationResult = {
+  /**
+   * The action taken by this Detector
+   */
+  action?: string;
+  /**
+   * Detected MCP validation issues
+   */
+  entities?: Array<{
+    /**
+     * The type of MCP validation issue detected
+     */
+    type: string;
+    /**
+     * The analyzer that detected the issue
+     */
+    analyzer?: string;
+    /**
+     * Confidence score of the detection
+     */
+    confidence?: number;
+    /**
+     * The value that triggered the detection
+     */
+    value?: string;
+    /**
+     * Similarity score between tool descriptions
+     */
+    similarity?: number;
+  }>;
+};
+
 /**
  * Result of the recipe evaluating configured rules
  */
 export type AidrAccessRulesResponse = {
   [key: string]: unknown | AccessRuleResult;
+};
+
+export type AidrCodeResult = {
+  /**
+   * The action taken by this Detector
+   */
+  action?: string;
+  language?: string;
 };
 
 export type AidrPolicy = {
@@ -2091,12 +2179,16 @@ export type AidrPostV1GuardChatCompletionsResponses = {
       /**
        * Result of the policy analyzing and input prompt.
        */
-      detectors: {
+      detectors?: {
         malicious_prompt?: {
           /**
            * Whether or not the Malicious Prompt was detected.
            */
           detected?: boolean;
+          /**
+           * JSON Path for the elements of the input message that were analyzed
+           */
+          analyzed_paths?: Array<string>;
           /**
            * Details about the analyzers.
            */
@@ -2108,6 +2200,10 @@ export type AidrPostV1GuardChatCompletionsResponses = {
            */
           detected?: boolean;
           /**
+           * JSON Path for the elements of the input message that were analyzed
+           */
+          analyzed_paths?: Array<string>;
+          /**
            * Details about the detected entities.
            */
           data?: AidrRedactEntityResult;
@@ -2117,6 +2213,10 @@ export type AidrPostV1GuardChatCompletionsResponses = {
            * Whether or not the Malicious Entities were detected.
            */
           detected?: boolean;
+          /**
+           * JSON Path for the elements of the input message that were analyzed
+           */
+          analyzed_paths?: Array<string>;
           /**
            * Details about the detected entities.
            */
@@ -2128,6 +2228,10 @@ export type AidrPostV1GuardChatCompletionsResponses = {
            */
           detected?: boolean;
           /**
+           * JSON Path for the elements of the input message that were analyzed
+           */
+          analyzed_paths?: Array<string>;
+          /**
            * Details about the detected entities.
            */
           data?: AidrRedactEntityResult;
@@ -2137,6 +2241,10 @@ export type AidrPostV1GuardChatCompletionsResponses = {
            * Whether or not the Secret Entities were detected.
            */
           detected?: boolean;
+          /**
+           * JSON Path for the elements of the input message that were analyzed
+           */
+          analyzed_paths?: Array<string>;
           /**
            * Details about the detected entities.
            */
@@ -2148,6 +2256,10 @@ export type AidrPostV1GuardChatCompletionsResponses = {
            */
           detected?: boolean;
           /**
+           * JSON Path for the elements of the input message that were analyzed
+           */
+          analyzed_paths?: Array<string>;
+          /**
            * Details about the detected entities.
            */
           data?: AidrSingleEntityResult;
@@ -2157,6 +2269,10 @@ export type AidrPostV1GuardChatCompletionsResponses = {
            * Whether or not the Languages were detected.
            */
           detected?: boolean;
+          /**
+           * JSON Path for the elements of the input message that were analyzed
+           */
+          analyzed_paths?: Array<string>;
           /**
            * Details about the detected languages.
            */
@@ -2168,9 +2284,27 @@ export type AidrPostV1GuardChatCompletionsResponses = {
            */
           detected?: boolean;
           /**
+           * JSON Path for the elements of the input message that were analyzed
+           */
+          analyzed_paths?: Array<string>;
+          /**
            * Details about the detected topics.
            */
           data?: AidrTopicResult;
+        };
+        emoji?: {
+          /**
+           * Whether or not any emojis were detected.
+           */
+          detected?: boolean;
+          /**
+           * JSON Path for the elements of the input message that were analyzed
+           */
+          analyzed_paths?: Array<string>;
+          /**
+           * Details about the detected emojis.
+           */
+          data?: AidrEmojiResult;
         };
         code?: {
           /**
@@ -2178,9 +2312,24 @@ export type AidrPostV1GuardChatCompletionsResponses = {
            */
           detected?: boolean;
           /**
+           * JSON Path for the elements of the input message that were analyzed
+           */
+          analyzed_paths?: Array<string>;
+          /**
            * Details about the detected code.
            */
-          data?: AidrLanguageResult;
+          data?: AidrCodeResult;
+        };
+        mcp_validation?: {
+          /**
+           * Whether or not MCP validation issues were detected
+           */
+          detected?: boolean;
+          /**
+           * JSON Path for the elements of the input message that were analyzed
+           */
+          analyzed_paths?: Array<string>;
+          data?: AidrMcpValidationResult;
         };
       };
       access_rules?: AidrAccessRulesResponse;

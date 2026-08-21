@@ -230,6 +230,7 @@ export const ChatCompletionsGuardSchema = v.strictObject({
   source_ip: v.optional(v.string()),
   source_location: v.optional(v.string()),
   tenant_id: v.optional(v.string()),
+  span_id: v.optional(v.string()),
   event_type: v.optional(v.string(), 'input'),
   collector_instance_id: v.optional(v.string()),
   extra_info: v.optional(
@@ -238,8 +239,8 @@ export const ChatCompletionsGuardSchema = v.strictObject({
         app_name: v.optional(v.string()),
         app_group: v.optional(v.string()),
         app_version: v.optional(v.string()),
-        actor_name: v.optional(v.string()),
-        actor_group: v.optional(v.string()),
+        user_name: v.optional(v.string()),
+        user_group: v.optional(v.string()),
         source_region: v.optional(v.string()),
         sub_tenant: v.optional(v.string()),
         mcp_tools: v.optional(
@@ -258,6 +259,16 @@ export const ChatCompletionsGuardSchema = v.strictObject({
     )
   ),
   input_fpe_context: v.optional(v.string()),
+  session_id: v.optional(v.pipe(v.string(), v.maxLength(256))),
+  conversation_id: v.optional(v.pipe(v.string(), v.maxLength(256))),
+  image_file_name: v.optional(v.pipe(v.string(), v.maxLength(512))),
+  process_sha256: v.optional(v.pipe(v.string(), v.maxLength(128))),
+  process_tags: v.optional(v.array(v.string())),
+  agent_type: v.optional(v.picklist(['code-assistant', 'chatbot', 'subagent'])),
+  is_agent: v.optional(v.boolean()),
+  process_id: v.optional(v.pipe(v.string(), v.maxLength(128))),
+  hostname: v.optional(v.pipe(v.string(), v.maxLength(253))),
+  domain: v.optional(v.pipe(v.string(), v.maxLength(253))),
 });
 
 export const AidrPromptInjectionResultSchema = v.object({
