@@ -56,6 +56,10 @@
                               "type": "boolean",
                               "description": "Whether or not the original input was transformed."
                             },
+                            "display_message": {
+                              "type": "string",
+                              "description": "Message to show the user when the request is blocked or transformed. Omitted when no message applies. An empty string means show nothing."
+                            },
                             "policy": {
                               "type": "string",
                               "description": "The Policy that was used."

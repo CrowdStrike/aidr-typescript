@@ -1090,6 +1090,7 @@ export const AidrPostV1GuardChatCompletionsResponseSchema = v.union([
           guard_output: v.optional(v.record(v.string(), v.unknown())),
           blocked: v.optional(v.boolean()),
           transformed: v.optional(v.boolean()),
+          display_message: v.optional(v.string()),
           policy: v.optional(v.string()),
           detectors: v.object({
             malicious_prompt: v.optional(
