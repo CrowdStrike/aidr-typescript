@@ -2173,6 +2173,10 @@ export type AidrPostV1GuardChatCompletionsResponses = {
        */
       transformed?: boolean;
       /**
+       * Message to show the user when the request is blocked or transformed. Omitted when no message applies. An empty string means show nothing.
+       */
+      display_message?: string;
+      /**
        * The Policy that was used.
        */
       policy?: string;
